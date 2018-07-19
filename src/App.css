@@ -1,0 +1,264 @@
+/* box 1 */
+.App nav {
+  position: absolute;
+  width: 25%;
+  height: 82%;
+  padding-top: 2.5%;
+  overflow: auto;
+  background-color: lightgrey;
+  padding-left: 1em;
+}
+
+.App nav .App-title {
+  float: left;
+  margin-top: 2%;
+  margin-left: 6%;
+  font-family: sans-serif;
+  font-size: 2em;
+  font-weight: bolder;
+  color: white;
+    text-shadow: 1px 1px 2px black, 0 0 25px #4284F9, 0 0 10px darkblue;
+}
+.RoomList #newRoom {
+  margin-top: 2.3%;
+  margin-left: 5%;
+  padding: 5px 10px 5px 10px;
+  font-size: 1.2em;
+  background-color:#4284F9;
+  color: white;
+  border-radius: 5px;
+}
+
+.App nav .RoomList ul#roomsProper {
+  position: absolute;
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 10%;
+  width: 88%;
+  font-family: serif;
+  font-size: 1.5em;
+  font-weight: bold;
+  text-align: right;
+}
+
+.RoomList ul#roomsProper li {
+  display: block;
+  line-height: 2em;
+  padding-right: 4%;
+  white-space: nowrap;
+}
+
+.RoomList #formToCreateRoom, .RoomList #formToRenameRoom {
+  position: fixed;
+  display: none;
+  top: 20%;
+  left: 45%;
+  width: 35%;
+  background-color: lightgrey;
+  border: black solid 1px;
+  padding: 20px;
+}
+#formToCreateRoom fieldset, #formToRenameRoom fieldset{
+  border: none;
+}
+
+#formToCreateRoom label>input, #formToRenameRoom label>input{
+  display: block;
+  width: 95%;
+  padding: 7px;
+  margin-bottom: 10px;
+}
+
+.RoomList .buttons button{
+  width: 46%;
+  margin: 5px;
+  padding: 7px;
+  background-color: 	#4284F9;
+  color: white;
+  border-radius: 5px
+}
+
+/* box 2 */
+main .MessageList{
+  position: absolute;
+  left: 27%;
+  width: 70%;
+  height: 82%;
+  overflow: auto;
+  padding-top: 3%;
+  padding-right: 1%;
+}
+
+.MessageList h3 {
+  margin-left: 1.5em;
+  font-family: serif;
+  font-size: 1.5em;
+}
+
+.MessageList li {
+  display: block;
+  padding: 1px 1% 1px 1%;
+}
+.MessageList #msgProper li:nth-child(even) {
+  background-color: #e5e6e8;
+}
+.MessageList li p .username {
+  float: left;
+  font-weight: bold;
+  margin: 0;
+}
+.MessageList li p .content {
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+}
+.MessageList li .msgHeader .sentat{
+  font-family: monospace;
+  font-size: 1.1em;
+  float: right;
+  margin: 0;
+  margin-right: 2em;
+}
+
+.MessageList li  .username .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+.MessageList li p .username .tooltiptext {
+  background-color: green;
+  color: white;
+}
+.MessageList li .username .tooltiptext {
+  background-color: #b2342a;
+  color: white;
+}
+.MessageList li  .username:hover .tooltiptext {
+    visibility: visible;
+}
+
+.MessageList #msgProper li:focus {
+  background-color: #c9ddfc;
+  border: none;
+}
+
+.isTyping {
+  float:left;
+  padding-left: 1em;
+}
+.isTyping {
+  overflow: hidden; /* Ensures the content is not revealed until the animation */
+  border-right: .15em solid silver; /* The typwriter cursor */
+  white-space: nowrap; /* Keeps the content on a single line */
+  margin: 0 auto;  /*Gives that scrolling effect as the typing happens */
+  letter-spacing: .15em; /* Adjust as needed */
+  animation:
+   typing 3s steps(30, end),
+   blink-caret 1s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 9em }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: silver; }
+}
+
+main #newMessage{
+  position: absolute;
+  bottom: 2%;
+  margin-left: 33%;
+  height: 6.5%;
+  width: 50%;
+  padding: 1%;
+  border: #4284F9 groove 3px;
+  border-radius: 5px;
+  z-index: 1;
+}
+main #newMessageSubmit{
+  position: absolute;
+  bottom: 4%;
+  right: 3%;
+  width: 8%;
+  height: 3.3%;
+  background-color:	#4284F9;
+  color: white;
+  border-radius: 5px;
+  font-size: 1em;
+  z-index: 1;
+}
+
+/* box 3*/
+.App footer .User{
+  position: absolute;
+  bottom: 0%;
+  height: 12.5%;
+  width: 99%;
+  border-top: silver groove 5px;
+  border-bottom: silver groove 5px;
+  z-index: -1;
+}
+
+.User p {
+  position: absolute;
+  margin-left: 7%;
+  bottom: 60%;
+}
+.User h3 {
+  position: absolute;
+  margin-left: 7%;
+  bottom: 30%;
+}
+.User button{
+  position: absolute;
+  left: 7%;
+  bottom: 7%;
+  width: 10%;
+  height: 23%;
+  font-size: 1em;
+  background-color:#4284F9;
+  color: white;
+  border-radius: 5px;
+}
+.User img{
+  position: absolute;
+  left: 4%;
+  bottom: 10%;
+  width: 20%;
+  height: 35%;
+  border-radius: 5px;
+}
+
+/* right-click menu */
+#contextRoom, #contextMsg {
+  display: none;
+  z-index: 1;
+  position: fixed;
+  padding: 0;
+  background-color:#4284F9;
+  color: white;
+  border-radius: 5px;
+  margin: 0;
+  list-style-type: none;
+  list-style: none;
+  overflow: auto;
+}
+#contextRoom li, #contextMsg li{
+  display: block;
+  border-bottom: 2px groove silver;
+  padding: 4px;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+#contextRoom{
+  font-size: 1em;
+  font-weight: normal;
+}
