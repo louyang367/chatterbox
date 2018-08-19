@@ -34,5 +34,11 @@ color: white;
 
 /* Room name of MessageList */
 .MessageList .RoomName {
-  border-left: 8px double #17a2b8
+  border-top: 2px solid #17a2b8;
+  border-bottom: 2px solid #17a2b8
+}
+
+.RoomList .card {
+  border-left: 1px solid #17a2b8;
+  border-right: 1px solid #17a2b8
 }
