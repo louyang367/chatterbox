@@ -7,216 +7,237 @@ class RoomList extends Component {
       rooms: []
     };
     this.roomsRef = this.props.firebase.database().ref('rooms');
-    this.modal = null;
-    this.contextMenuForRoom = null;
     this.newRoomInput = null;
     this.renameRoomInput = null;
-    this.roomInput = null;
     this.formToCreateRoom = null;
-    this.formToRenameRoom = null;
+    this.formToEditRoom = null;
   }
 
-  ignoreEnterKey (e) {
-    if ( (e.keyIdentifier==='U+000A'||e.keyIdentifier==='Enter'||e.keyCode===13)
-      && (e.target.nodeName==='INPUT' && e.target.type==='text') ){
-        e.preventDefault();
-      }
-  }
-
-  clicktoClose(){
-    if (this.contextMenuForRoom)
-      this.contextMenuForRoom.style.display = 'none';
-  }
-
-  loadSnapshot(snapshot){
+  loadSnapshot(snapshot) {
     const roomsObj = snapshot.val();
     let rooms = [];
-    for (let roomId in roomsObj){
+    for (let roomId in roomsObj) {
       const aRoom = {};
       aRoom.key = roomId;
-      aRoom.value = roomsObj[roomId];
+      aRoom.name = roomsObj[roomId].name;
+      aRoom.uid = roomsObj[roomId].uid;
+      aRoom.createdBy = roomsObj[roomId].createdBy;
       rooms.push(aRoom);
     }
-    this.setState( {rooms: rooms} );
+    if (!this.props.currentRoom) {
+      this.props.setCurrentRoom(rooms[0]);
+    }
+    this.setState({ rooms: rooms });
   }
 
   componentDidMount() {
     this.roomsRef.on('value', snapshot => this.loadSnapshot(snapshot));
-    document.addEventListener('keydown', this.ignoreEnterKey);
-    document.addEventListener('click', ()=>{this.clicktoClose()});
-    }
+    // document.addEventListener('keydown', this.ignoreEnterKey);
+    // document.addEventListener('click', () => { this.clicktoClose() });
+  }
 
   componentWillUnmount() {
     this.roomsRef.off('value', this.loadSnapshot);
-    document.removeEventListener('keydown', this.ignoreEnterKey);
-    document.removeEventListener('click', ()=>{this.clicktoClose()});
+    // document.removeEventListener('keydown', this.ignoreEnterKey);
+    // document.removeEventListener('click', () => { this.clicktoClose() });
   }
 
-  handleRoomFormClick(){
-    this.modal.style.display = "block";
-    this.modal.style.zIndex = 1;
-    this.roomInput.focus();
-    this.contextMenuForRoom.style.display = 'none';
-  }
-
-  handleCloseRoomFormClick(){
-    this.modal.style.display = "none";
-    this.modal = null;
-    this.roomInput = null;
-  }
-
-  validateName(e, newName){
-    if (newName===null || newName.length===0 || newName.trim()==='') {
+  validateName(e, newName) {
+    if (newName === null || newName.length === 0 || newName.trim() === '') {
       alert("Please enter a valid name.");
-      this.modal.style.display = "block";
       e.preventDefault();
-      return false; }
+      return false;
+    }
     else return true;
   }
 
-  createRoom(e){
-    const val = this.newRoomInput.value;//(document.forms['formToCreateRoom']['inputRoomName'].value);
+  validateAction(isNew) {
+    if (!this.props.currentUser) {
+      alert("You have to sign in to edit or delete a room.");
+      this.newRoomInput.value = '';
+      this.renameRoomInput.value = '';
+      return false;
+    }
+    if (!isNew) {
+      if (this.props.currentUser.uid !== this.props.currentRoom.uid) {
+        alert("You can only edit or delete your own posts.");
+        return false;
+      }
+    }
+    return true;
+  }
 
-    if (this.validateName(e, val)) {
-      const newRef = this.roomsRef.push();
-      newRef.set(val);
+  createRoom(e) {
+    const name = this.newRoomInput.value;// (document.forms['formToCreateRoom']['inputRoomName'].value);
+    if (this.validateAction(true) && this.validateName(e, name)) {
+
+      // if (this.validateName(e, val)) {
+      //   const newRef = this.roomsRef.push();
+      //   newRef.set(val);
+      // }
+      const newRoom = {};
+      const newRoomRef = this.roomsRef.push();
+
+      newRoom.value = {
+        name: name,
+        uid: this.props.currentUser.uid,
+        createdBy: this.props.currentUser.displayName
+      };
+
+      newRoomRef.set(newRoom.value)
+        .then(() => {
+          console.log('New room created: ',newRoom.value.name,' by ', newRoom.value.createdBy);
+          const room = {
+            key: newRoomRef.key,
+            name: name,
+            uid: this.props.currentUser.uid,
+            createdBy: this.props.currentUser.displayName    
+          };
+          this.props.setCurrentRoom(room);
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+
       e.preventDefault();
-      this.props.setCurrentRoom( {key: newRef.key, value: this.newRoomInput.value} );
-      this.handleCloseRoomFormClick();
-      this.newRoomInput.value = null;
+      document.getElementById("formToCreateRoom").reset();
+      document.getElementById("closeNewRoomModal").click();
     }
   }
 
-  renameRoom(e){
-    const val = this.renameRoomInput.value;
-    if (this.validateName(e, val)) {
-    //console.log('val= '+val+' val.trim()=|'+val.trim()+'|');
-      const update = {};
-      update['rooms/'+this.props.currentRoom.key] = this.renameRoomInput.value;
-      this.props.firebase.database().ref().update(update)
-      .then(()=>{/*console.log("Rename succeeded.")*/})
-      .catch(error=>{console.log(error.message)});
+  renameRoom(e) {
+    const newName = this.renameRoomInput.value;
+    if (this.validateAction(false) && this.validateName(e, newName)) {
+      // const update = {};
+      // update['rooms/' + this.props.currentRoom.key] = this.renameRoomInput.value;
+      // this.props.firebase.database().ref().update(update)
+      const clickedRoomRef = this.props.firebase.database().ref('rooms/' + this.props.currentRoom.key);
+      clickedRoomRef.update({
+        "name": newName
+      })
+        .then(() => {
+          /*console.log("Rename room succeeded.")*/
+          let room = {};
+          for (let key in this.props.currentRoom){
+            room[key] = this.props.currentRoom[key];
+          }
+          room['name'] = newName;
+          this.props.setCurrentRoom(room);
+        })
+        .catch(error => { console.log(error.message) });
       e.preventDefault();
-      this.props.setCurrentRoom( {key: this.props.currentRoom.key, value: this.renameRoomInput.value} );
-      this.renameRoomInput.value = null;
-      this.handleCloseRoomFormClick();
+      document.getElementById("formToEditRoom").reset();
+      document.getElementById("closeEditRoomModal").click();
     }
   }
 
-  deleteRoom(){
-    const clickedRoomRef = this.props.firebase.database().ref('rooms/'+this.props.currentRoom.key);
-    clickedRoomRef.remove()
-      .then(/*()=>console.log("Remove succeeded.")*/)
-      .catch(error=>{console.log(error.message)});
-    this.props.setCurrentRoom(null);
-    this.contextMenuForRoom.style.display = 'none';
-  }
-
-  static mouseX(evt, document) {
-    if (evt.pageX) {
-      return evt.pageX; }
-    else if (evt.clientX) {
-      return evt.clientX + (document.documentElement.scrollLeft ?
-        document.documentElement.scrollLeft :
-        document.body.scrollLeft); }
-    else {
-      return null; }
-  }
-
-  static mouseY(evt, document) {
-    if (evt.pageY) {
-      return evt.pageY; }
-    else if (evt.clientY) {
-      return evt.clientY + (document.documentElement.scrollTop ?
-        document.documentElement.scrollTop :
-        document.body.scrollTop); }
-    else {
-      return null; }
-  }
-
-  handleRoomContext(e, room){
-    e.preventDefault();
-    this.props.setCurrentRoom(room);
-    this.contextMenuForRoom.style.display = "block";
-    this.contextMenuForRoom.style.top =  RoomList.mouseY(e, document) + 'px';
-    this.contextMenuForRoom.style.left =  RoomList.mouseX(e, document) + 'px';
-  }
-
-  hiliteRoom(room, index){
-    const highLight = {backgroundColor:'#c9ddfc', color:'black',borderStyle:'groove',borderColor:'c9ddfc',borderLeft:'None',borderRight:'none'};//#4284F9
-    const plain = {backgroundColor:'lightgray', color:'black'};
-    if (this.props.currentRoom!=null && room.key===this.props.currentRoom.key)
-      return <li key={room.key} onClick={()=>this.props.setCurrentRoom(room)}
-        style={highLight}
-        onContextMenu= {(e)=>this.handleRoomContext(e, room)}
-      >{room.value}</li>
-    else {
-      return <li key={room.key} onClick={()=>this.props.setCurrentRoom(room)}
-        style={plain}
-        onContextMenu= {(e)=>this.handleRoomContext(e, room)}
-      >{room.value}</li>;
+  deleteRoom() {
+    if (this.validateAction(false)) {
+      const clickedRoomRef = this.props.firebase.database().ref('rooms/' + this.props.currentRoom.key);
+      clickedRoomRef.remove()
+        .then(/*()=>console.log("Remove succeeded.")*/)
+        .catch(error => { console.log(error.message) });
+      this.props.setCurrentRoom(this.state.rooms[0]);
+      document.getElementById("formToEditRoom").reset();
+      document.getElementById("closeEditRoomModal").click();
     }
   }
 
-  render(){
+  hiliteRoom(room) {
+    if (this.props.currentRoom != null && room.key === this.props.currentRoom.key)
+      return <li className='list-group-item active' key={room.key} onClick={() => { this.props.setCurrentRoom(room); this.renameRoomInput.value = room.name }}>{room.name}</li>
+    else {
+      return <li className='list-group-item' key={room.key} onClick={() => { this.props.setCurrentRoom(room); this.renameRoomInput.value = room.name }}>{room.name}</li>;
+    }
+  }
+
+  render() {
     //console.log("roomList.js render: props.currentRoom="+this.props.currentRoom);
     //console.log("roomList.js render: props.className="+this.props.className);
     return (
-      <div className = {this.props.className}>
-        <h1 className="App-title">Chatterbox</h1>
-        {/* button to create new room */}
-        <button type='button'
-          name='New room' id='newRoom'
-          onClick={()=>{
-            this.modal=this.formToCreateRoom;
-            this.roomInput=this.newRoomInput;
-            this.handleRoomFormClick()}}> New room </button>
-        {/* form to create new room. No checking for duplication. */}
-        <form name = 'formToCreateRoom' id='formToCreateRoom'
-          ref={(form)=>{this.formToCreateRoom=form}}
-          onSubmit={(e)=>this.createRoom(e)}>
-          <fieldset>
-            <h3>Create New Room</h3>
-            <label>Enter a room name
-              <input type='text' name='inputRoomName' ref={input=>this.newRoomInput=input}/>
-            </label>
-            <div className='buttons'>
-              <button type='reset' value='Cancel' onClick={()=>this.handleCloseRoomFormClick()}>Cancel</button>
-              <button type='submit' value='Create'>Create</button>
-            </div>
-          </fieldset>
-        </form>
+      <div className={this.props.className}>
         {/* list of existing rooms */}
-        <ul id='roomsProper'>
-          {
-            this.state.rooms.map( (room, index) => this.hiliteRoom(room, index)
-          )}
-        </ul>
-        {/* right click menu */}
-        <div>
-          <ul id='contextRoom' ref={(menu)=>this.contextMenuForRoom=menu}>
-            <li onClick={(e)=>this.deleteRoom(e)}>Delete</li>
-            <li onClick={(e)=>{
-                this.modal=this.formToRenameRoom;
-                this.roomInput=this.renameRoomInput;
-                this.handleRoomFormClick()}}>Rename</li>
-          </ul>
+        <div className="card">
+          <div className='card-header text-center bg-light text-dark'>
+            <h3 className='dropdown'>
+              <a href="#" className="dropdown-toggle" data-toggle="dropdown">
+                Rooms</a>
+              <div className="dropdown-menu">
+                <a href="#" className="dropdown-item" data-toggle="modal" data-target="#addRoomModal">
+                  <i className="fas fa-plus"></i> Add A Room
+                </a>
+                <a href="#" className="dropdown-item" data-toggle="modal" data-target="#editRoomModal">
+                  <i className="fas fa-pencil-alt"></i> Edit Room
+                </a>
+              </div>
+            </h3>
+          </div>
+          <div className="card-body p-0 mt-3">
+            <ul className='list-group-flush' style={{ WebkitPaddingStart: 0 }}>
+              {
+                this.state.rooms.map((room, index) => this.hiliteRoom(room)
+                )}
+            </ul>
+          </div>
         </div>
-        {/* form to enter new room name. No checking for duplication. */}
-        <form name = 'formToRenameRoom' id='formToRenameRoom'
-          ref={(form)=>{this.formToRenameRoom=form}}
-          onSubmit={(e)=>this.renameRoom(e)}>
-          <fieldset>
-            <h3>Rename the Room</h3>
-            <label>Enter a new room name
-              <input type='text' name='newRoomName' ref={input=>this.renameRoomInput=input}/>
-            </label>
-            <div className='buttons'>
-              <button type='reset' value='Cancel' onClick={()=>this.handleCloseRoomFormClick()}>Cancel</button>
-              <button type='submit' value='Rename'>Rename</button>
+
+        {/* MODAL to create new room. No checking for duplication. */}
+        <div className="modal fade" id="addRoomModal">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header bg-success text-white">
+                <h5 className="modal-title">Add A Room</h5>
+                <button id='closeNewRoomModal' className="close" data-dismiss="modal">
+                  <span>&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <form name='formToCreateRoom' id='formToCreateRoom'
+                  ref={(form) => { this.formToCreateRoom = form }}
+                  onSubmit={(e) => this.createRoom(e)}>
+                  <div className="form-group">
+                    <label>Enter a room name</label>
+                    <input type='text' ref={input => this.newRoomInput = input} className="form-control" name='inputRoomName' />
+                  </div>
+                  <div className="modal-footer">
+                    <button type='submit' className="btn btn-success" >Save Changes</button>
+                    {/* data-dismiss="modal" prevents sending input value */}
+
+                  </div>
+                </form>
+              </div>
             </div>
-          </fieldset>
-        </form>
+          </div>
+        </div>
+
+        {/* MODAL to edit room */}
+        <div className="modal fade" id="editRoomModal">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header bg-success text-white">
+                <h5 className="modal-title">Edit Room</h5>
+                <button id='closeEditRoomModal' className="close" data-dismiss="modal">
+                  <span>&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <form name='formToEditRoom' id='formToEditRoom'
+                  ref={(form) => { this.formToEditRoom = form }}>
+                  <div className="form-group">
+                    <label htmlFor="title">Enter new room name</label>
+                    <input type='text' className="form-control" name='newRoomName'
+                      required ref={input => this.renameRoomInput = input} />
+                  </div>
+                </form>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-success" value='Rename' onClick={(e) => this.renameRoom(e)}>Save Changes</button>
+                <button className="btn btn-warning" value='Delete' onClick={(e) => this.deleteRoom(e)}>Delete room</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     );
   }

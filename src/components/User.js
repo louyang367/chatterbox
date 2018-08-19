@@ -1,54 +1,57 @@
 import React, { Component } from 'react';
-//import * as firebase from 'firebase';
 
 class User extends Component {
   constructor(props) {
     super(props);
-    this.handleUserStatus = this.handleUserStatus.bind(this);
+    // this.onlineStatusRef = firebase.database().ref('signedInUsers');
   }
 
   componentDidMount() {
-    this.props.firebase.auth().onAuthStateChanged( (user) => {
+    this.props.firebase.auth().onAuthStateChanged((user) => {
+      // console.log('user.js: onAuthStateChanged --- ', user);
       this.handleUserStatus(user);
       this.props.setUser(user);
     });
 
-    window.addEventListener('beforeunload', (e =>{
-      this.handleUserStatus(null);
+    // window.addEventListener('beforeunload', (e => {
+    // window.addEventListener('close', (e => {
+    //   this.handleUserStatus(null);
       //custom message not working !
-      var confirmationMessage = "You will be signed off from Chatterbox.";
-      (e || window.event).returnValue = confirmationMessage; //Gecko + IE
-      return confirmationMessage;                            //Webkit, Safari, Chrome
-    }));
-}
+      // var confirmationMessage = "You will be signed off from Chatterbox.";
+      // (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+      // return confirmationMessage;                            //Webkit, Safari, Chrome
+    // }));
+  }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     this.props.firebase.auth().off();
+    // this.state.onlineStatusRef.off('value');
   }
 
   handleUserStatus(user) {
     if (user) {
-      //console.log('onAuthStateChanged: '+user.displayName+'signed in');
-      const ref = this.props.firebase.database().ref('signedInUsers/'+user.uid);
-      ref.child('isTyping').set('false').catch((error)=>{
-        alert('onAuthStateChanged-add online user: '+error.message);
+      console.log('onAuthStateChanged: ' + user.displayName + ' signed in');
+      const ref = this.props.firebase.database().ref('signedInUsers/' + user.uid);
+      ref.child('isTyping').set('false').catch((error) => {
+        alert('onAuthStateChanged-add online user: ' + error.message);
       })
     }
     else {
-      //console.log('onAuthStateChanged: '+this.props.currentUser.displayName+'signed out');
-      this.props.firebase.database().ref('signedInUsers/'+this.props.currentUser.uid).remove().catch((error)=>{
-        alert('onAuthStateChanged-remove online user: '+error.message);
+      console.log('onAuthStateChanged: ' + this.props.currentUser.displayName + ' signed out');
+      this.props.firebase.database().ref('signedInUsers/' + this.props.currentUser.uid).remove().catch((error) => {
+        alert('onAuthStateChanged-remove online user: ' + error.message);
       })
     }
   }
 
   handleSignOut() {
     //console.log('in handleSignOut!');
-    this.props.firebase.auth().signOut().then( ()=> {
+    this.props.firebase.auth().signOut().then(() => {
       //console.log('handleSignOut succeeded');
       // firebase.auth().onAuthStateChanged catches all user changes and calls setUser() anyway
-    }).catch((error)=>{
-      alert('Sign out error: '+error.message);
+      // console.log('User.js: SIGNED OUT!');
+    }).catch((error) => {
+      alert('Sign out error: ' + error.message);
     });
   }
 
@@ -56,33 +59,37 @@ class User extends Component {
     const provider = new this.props.firebase.auth.GoogleAuthProvider();
 
     this.props.firebase.auth().setPersistence(this.props.firebase.auth.Auth.Persistence.SESSION)
-      .then(()=> {
-        this.props.firebase.auth().signInWithPopup(provider).then( (result)=> {
+      .then(() => {
+        this.props.firebase.auth().signInWithPopup(provider).then((result) => {
           // firebase.auth().onAuthStateChanged catches all user changes and calls setUser() anyway
-        }).catch((error)=>{
+          console.log('User.js: SIGNED IN!');
+        }).catch((error) => {
           alert(`Sign in errorMessage=${error.message} email=${error.email} credential=${error.credential}`);
         });
       })
-    .catch((error)=> {
-      alert('setPersistence error: '+error.message);
+      .catch((error) => {
+        alert('setPersistence error: ' + error.message);
       });
+  }
+
+  render() {
+    let name, button;
+    if (this.props.currentUser) {
+     name = this.props.currentUser.displayName;
+     button = <button className="btn btn-outline-warning ml-3" name='SignOut' id='singOut' onClick={() => this.handleSignOut()}><i className="fas fa-user-times"></i> Log out</button>
+    } else {
+      name = 'Guest';
+      button = <img src='/googleSignIn1.png' id='googleSingIn' alt='Google signin icon' width='180px' style={{marginLeft:'5px', border:'1px groove #17a2b8'}} onClick={() => this.handleSignIn()} />;
     }
 
-
-  render(){
-    if (this.props.currentUser === null)
-      return (
-        <div className = {this.props.className}>
-          <p>You are not signed in.</p>
-          {/*<button type='button' name='SignIn' id='singIn' onClick={()=>this.handleSignIn()}>Sign in</button>*/}
-          <img src='/googleSignIn1.png' id='singIn' alt='Google signin icon' onClick={()=>this.handleSignIn()} />
-        </div> )
-    else return (
-      <div className = {this.props.className}>
-        <p>You are signed in as:</p>
-        <h3>{this.props.currentUser.displayName}</h3>
-        <button type='button' name='SignOut' id='singOut' onClick={()=>this.handleSignOut()}>Sign out</button>
-      </div> )
+     return (
+      <div className={this.props.className}>
+        <p className='pt-3 float-right'>
+          Welcome!<span className='font-weight-bold'><i className="fas fa-user ml-3"></i> {name} </span> 
+          <span>{button}</span>
+        </p>
+      </div>
+    )
   }
 };
 

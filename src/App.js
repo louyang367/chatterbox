@@ -4,9 +4,7 @@ import * as firebase from 'firebase';
 import RoomList from './components/RoomList';
 import MessageList from './components/MessageList';
 import User from './components/User';
-
-// Initialize Firebase
-// <script src="https://www.gstatic.com/firebasejs/5.2.0/firebase.js"></script>
+import OnlineStatus from './components/OnlineStatus';
 
 var config = {
   apiKey: "AIzaSyDqwX_WNEyLyplqu6AnX2KarIABeJ53aeM",
@@ -23,49 +21,130 @@ class App extends Component {
     super(props);
     this.state = {
       currentRoom: null,
-      currentUser: null
+      currentUser: null,
+      currentMsgs: [],
+      onlineStatusRecords: []
     };
   }
 
   setCurrentRoom(currentRoom) {
-    if (currentRoom !== this.state.currentRoom) {
-      //console.log('app.js:setCurrentRoom: '+currentRoom)
-      this.setState({ currentRoom: currentRoom });
-    }
+    // console.log('app.js:setCurrentRoom:currentRoom=', currentRoom);
+    this.setState({ currentRoom: currentRoom });
   }
 
   setUser(user) {
-    if (user !== this.state.currentUser) {
-      this.setState({ currentUser: user });
+    this.setState({ currentUser: user });
+  }
+
+  setCurrentMsgs(msgs) {
+    this.updateOnlineStatusForMsgs(msgs, this.state.onlineStatusRecords);
+    this.setState({ currentMsgs: msgs });
+  }
+
+  setUserOnlineStatus(onlineStatusRecords) {
+    let messages = this.state.currentMsgs.slice(0);
+    let changed = this.updateOnlineStatusForMsgs(messages, onlineStatusRecords);
+    //console.log('Changed='+changed);
+    if (changed)
+      this.setState({ currentMsgs: messages, onlineStatusRecords: onlineStatusRecords });
+    else
+      this.setState({ onlineStatusRecords: onlineStatusRecords });
+  }
+
+  updateOnlineStatusForMsgs(msgs, onlineStatusRecords) {
+    let changed = false;
+    let listofOnline = onlineStatusRecords ? Object.keys(onlineStatusRecords) : [];
+    //console.log('in updateOnlineStatus: listofOnline='+listofOnline);
+
+    for (let index in msgs) {
+      //console.log('msg="'+msgs[index].value.content+'" room='+msgs[index].value.roomId);
+      let foundIndex = listofOnline.indexOf(msgs[index].value.uid);
+      if (foundIndex >= 0) {
+        //console.log('found the message author in the user-online list '+msgs[index].value.username);
+        if (msgs[index].isOnline === false) {
+          //console.log('This message author was not online')
+          msgs[index].isOnline = true;
+          msgs[index].isTyping = onlineStatusRecords[listofOnline[foundIndex]].isTyping;
+          changed = true;
+        }
+        else if (msgs[index].isTyping !== onlineStatusRecords[listofOnline[foundIndex]].isTyping) {
+          //console.log(`Typing status diff: this.state.currentMsgs[${index}].isTyping=${msgs[index].isTyping}`);
+          //console.log(`Typing status diff: records[listofOnline[${foundIndex}]].isTyping=${onlineStatusRecords[listofOnline[foundIndex]].isTyping}`);
+          msgs[index].isTyping = onlineStatusRecords[listofOnline[foundIndex]].isTyping;
+          changed = true;
+        }
+      } else {
+        //console.log('Msg author not on the online list!');
+        if (msgs[index].isOnline === true) {
+          //console.log('...And he was online before...')
+          msgs[index].isOnline = false;
+          msgs[index].isTyping = 'false';
+          changed = true;
+        }
+      }
     }
+    return changed;
   }
 
   render() {
     //console.log("app.js render: currentRoom="+this.state.currentRoom+', currentUser='+this.state.currentUser);
     return (
       <div className="App">
-        <header className="App-header">
+        <header id="App-header" className="py-2 bg-info text-white">
+          <div className="container">
+            <div className="row">
+              <div className="col-md-5">
+                <span className='display-4'><i className="fa fa-comments"></i> ChatterBox</span>
+              </div>
+              <div className="col-md-2"></div>
+              <div className="col-md-5 px=0">
+                <User className="User"
+                  firebase={firebase}
+                  currentUser={this.state.currentUser}
+                  setUser={(user) => this.setUser(user)}
+                />
+              </div>
+
+            </div>
+          </div>
         </header>
-        <nav>
-          <RoomList className='RoomList'
-            firebase={firebase}
-            currentRoom={this.state.currentRoom}
-            setCurrentRoom={(room) => this.setCurrentRoom(room)} />
-        </nav>
+
         <main>
-          <MessageList className='MessageList'
-            firebase={firebase}
-            currentRoom={this.state.currentRoom}
-            currentUser={this.state.currentUser}
-          />
+          <div className="container mt-4">
+            <div className="row">
+              <div className="col-md-8">
+                <MessageList className='MessageList'
+                  firebase={firebase}
+                  currentRoom={this.state.currentRoom}
+                  currentUser={this.state.currentUser}
+                  currentMsgs={this.state.currentMsgs}
+                  setCurrentMsgs={(msgs) => this.setCurrentMsgs(msgs)}
+                  key={this.state.currentRoom ? this.state.currentRoom.key : null}
+                />
+              </div>
+
+              <div className="col-md-4" id='roomsProper'>
+                <RoomList className='RoomList'
+                  firebase={firebase}
+                  currentRoom={this.state.currentRoom}
+                  currentUser={this.state.currentUser}
+                  setCurrentRoom={(room) => this.setCurrentRoom(room)} />
+              </div>
+            </div>
+          </div>
+
         </main>
-        <footer>
-          <User className="User"
-            firebase={firebase}
-            currentUser={this.state.currentUser}
-            setUser={(user) => this.setUser(user)}
-          />
+
+        <footer id="main-footer" className="text-white bg-info mt-5 p-2 fixed-bottom">
+            <OnlineStatus className="OnlineStatus"
+              firebase={firebase}
+              onlineStatusRecords={this.state.onlineStatusRecords}
+              setUserOnlineStatus={(onlineStatusRecords) => this.setUserOnlineStatus(onlineStatusRecords)
+              }
+            />
+
         </footer>
+
       </div>
     )
   }

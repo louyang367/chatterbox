@@ -1,131 +1,59 @@
 import React, { Component } from 'react';
 import * as firebase from 'firebase';
-import RoomList from './RoomList';
 
 class MessageList extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      messages: [],
-      currentRoom: this.props.currentRoom
-    };
+    this.input = null;
     this.messageRef = this.props.firebase.database().ref('messages');
-    this.onlineRef = this.props.firebase.database().ref('signedInUsers');
-    this.editMode = false;
-    this.contextMenuForMsg = null;
+    this.editInput = null;
     this.currentMsg = null;
-    this.currentList = null;
-    this.onlineStatusRecords = [];
-    this.isTypingNew = false;
   }
 
   componentDidMount() {
-    document.addEventListener('click', (e)=>{this.clicktoClose(e)});
-    // set listener for users' online status
-    this.onlineRef.on('value', (snapshot) => {
-      var changed = false;
-      var messages = this.state.messages.slice(0);
-      this.onlineStatusRecords = snapshot.val();
-      changed = this.updateOnlineStatus(messages);
-      //console.log('Changed='+changed);
-      if (changed) this.setState({ messages: messages });
-    })
+    // console.log('msgList.js:comptDidMt triggered. CurrRoom=', this.props.currentRoom);
+    this.messageRef.off('value');
+    if (this.props.currentRoom) {
+      console.log('value triggered! currRoom=' + this.props.currentRoom.key);
+      this.messageRef.orderByChild('roomId').equalTo(this.props.currentRoom.key).on('value', (snapshot) => {
+        let currentMsgs = [];
+        this.loadCurrMsgs(snapshot, currentMsgs);
+        this.props.setCurrentMsgs(currentMsgs);
+      })
+    }
   }
 
-  updateOnlineStatus(messages){
-    var changed = false;
-    var listofOnline = this.onlineStatusRecords!==null? Object.keys(this.onlineStatusRecords) : [];
-    //console.log('in updateOnlineStatus: listofOnline='+listofOnline);
-
-    for (let index in messages){
-      //console.log('msg="'+messages[index].value.content+'" room='+messages[index].value.roomId);
-      let foundIndex = listofOnline.indexOf(messages[index].value.uid);
-      if ( foundIndex >=0) {
-        //console.log('found the message author in the user-online list '+messages[index].value.username);
-        if (messages[index].isOnline === false) {
-          //console.log('This message author was not online')
-          messages[index].isOnline = true;
-          messages[index].isTyping = this.onlineStatusRecords[listofOnline[foundIndex]].isTyping;;
-          changed = true;
-        }
-        else if (messages[index].isTyping !== this.onlineStatusRecords[listofOnline[foundIndex]].isTyping) {
-          //console.log(`Typing status diff: messages[${index}].isTyping=${messages[index].isTyping}`);
-          //console.log(`Typing status diff: records[listofOnline[${foundIndex}]].isTyping=${this.onlineStatusRecords[listofOnline[foundIndex]].isTyping}`);
-          messages[index].isTyping = this.onlineStatusRecords[listofOnline[foundIndex]].isTyping;
-          changed = true;
-        }
-      } else {
-        //console.log('Msg author not on the online list!');
-        if (messages[index].isOnline === true) {
-          //console.log('...And he was online before...')
-          messages[index].isOnline = false;
-          messages[index].isTyping = 'false';
-          changed = true;
-        }
+  loadCurrMsgs(snapshot, messages) {
+    const msgsObj = snapshot.val();
+    for (let msgId in msgsObj) {
+      const msg = {
+        key: msgId,
+        value: msgsObj[msgId],
+        isOnline: false,
+        isTyping: 'false'
       }
+      messages.push(msg);
     }
-  return changed;
   }
 
   componentWillUnmount() {
-    this.messageRef.off('value');
-    this.onlineRef.off('value');
-    document.removeEventListener('click', (e)=>{this.clicktoClose(e)});
+    if (this.messageRef) this.messageRef.off('value');
   }
 
-  //static getDerivedStateFromProps(nextProps, prevState) {
-  componentDidUpdate(prevProps, prevState) {
-    //console.log('in componentDidUpdate: thisState.msgs='+this.State.messages.toString())
-    if (this.state.currentRoom !== this.props.currentRoom) {
-      this.messageRef.off('value');
-      let newState = {
-        messages: [],
-        currentRoom: this.props.currentRoom
-      };
-      if (this.props.currentRoom === null)
-        this.setState(newState);
-      else {
-        this.messageRef.orderByChild('roomId').equalTo(this.props.currentRoom.key).on('value', (snapshot)=>{
-        //console.log('value triggered! currRoom='+this.props.currentRoom.value);
-          newState = {
-            messages: [],
-            currentRoom: this.props.currentRoom
-          };
-          this.loadCurrRoom(snapshot, newState.messages);
-          if (newState.messages.length > 0) this.updateOnlineStatus(newState.messages);
-          this.setState(newState);
-        })
-      }
-    }
-  }
-
-  loadCurrRoom(snapshot, messages){
-      const msgsObj = snapshot.val();
-      for (let msgId in msgsObj){
-        const msg = {
-          key: msgId,
-          value: msgsObj[msgId],
-          isOnline: false,
-          isTyping: 'false'
-        }
-        messages.push(msg);
-      }
-    }
-
-  handleTextareaClick(){
-    if (this.props.currentRoom === null || this.props.currentUser === null)
+  handleStartTyping() {
+    if (!this.props.currentRoom || !this.props.currentUser)
       return;
 
-    const ref = this.props.firebase.database().ref('signedInUsers/'+this.props.currentUser.uid);
-    ref.child('isTyping').set('true').then(()=>{
-      this.isTypingNew = true;
+    const ref = this.props.firebase.database().ref('signedInUsers/' + this.props.currentUser.uid);
+    ref.child('isTyping').set('true').then(() => {
+      console.log(`${this.props.currentUser.uid} isTyping set to true in firebase`)
     })
-    .catch((error)=>{
-      alert(`Setting isTyping true: errorMessage=${error.message} email=${error.email} credential=${error.credential}`);
-    });
+      .catch((error) => {
+        alert(`Setting isTyping true: errorMessage=${error.message} email=${error.email} credential=${error.credential}`);
+      });
   }
 
-  handleNewMsgSubmit(){
+  handleNewMsgSubmit() {
     if (this.props.currentRoom === null) {
       alert("Please select a room first.");
       return;
@@ -135,7 +63,7 @@ class MessageList extends Component {
     } else if (this.input.value.trim() === '') {
       return;
     }
-    //clicktoClose() has already cleared the screen
+
     const newMessage = {};
     newMessage.key = this.messageRef.push();
 
@@ -148,170 +76,173 @@ class MessageList extends Component {
     };
 
     newMessage.key.set(newMessage.value)
-      .then(()=> {
+      .then(() => {
         this.input.value = '';
       })
-      .catch((error)=> {
+      .catch((error) => {
         alert(error.message);
       });
   }
 
-  handleEditMsgSubmit(){
-    const clickedMsgRef = this.props.firebase.database().ref('messages/'+this.currentMsg.key);
+  handleEditMsgSubmit(e) {
+    // console.log('------inside handleEditMsgSubmit');
+    if (this.validateAction() === false) return;
+    const clickedMsgRef = this.props.firebase.database().ref('messages/' + this.currentMsg.key);
     clickedMsgRef.update({
-      "content": this.input.value
+      "content": this.editInput.value
     })
-    .then(()=> {
-      this.input.value = '';
-      this.editMode = false;
-      this.currentList.style.border = 'none';
-      this.currentList = null;
-    })
-    .catch((error)=> {
-      alert(error.message);
-    });
+      .then(() => {
+        this.editInput.value = 'Type something ...';
+        e.preventDefault();
+        document.getElementById("closeEditMsgModal").click();
+      })
+      .catch((error) => {
+        alert(error.message);
+      });
   }
 
-  handleMsgContext(e, msg){
-    e.preventDefault();
-    this.contextMenuForMsg.style.display = "block";
-    this.contextMenuForMsg.style.top =  RoomList.mouseY(e, document) + 'px';
-    this.contextMenuForMsg.style.left =  RoomList.mouseX(e, document) + 'px';
-    this.currentMsg = msg;
-    //remove old selection's border
-    if (this.currentList != null)
-      this.currentList.style.border = 'none';
-    if (e.target.tagName === 'LI') this.currentList = e.target;
-    else if (e.target.tagName === 'P') this.currentList = e.target.parentElement;
-    else if (e.target.tagName === ('SPAN'||'DIV')) this.currentList = e.target.parentElement.parentElement;
-  }
-
-  validateAction(){
-    this.input.value = '';
+  validateAction() {
     if (this.props.currentUser === null) {
       alert("You have to sign in to post or edit a post.");
       return false;
-    } else if (this.props.currentUser.displayName !== this.currentMsg.value.username){
+    } else if (this.props.currentUser.displayName !== this.currentMsg.value.username) {
       alert("You can only edit or delete your own posts.");
       return false;
     }
     return true;
   }
 
-  deleteMsg(e){
+  handleDeleteMsg(e) {
     //console.log('in deleteMsg currentMsg='+this.currentMsg.value.content+' key='+this.currentMsg.key);
     if (this.validateAction() === false) return;
 
-    const clickedMsgRef = this.props.firebase.database().ref('messages/'+this.currentMsg.key);
+    const clickedMsgRef = this.props.firebase.database().ref('messages/' + this.currentMsg.key);
     clickedMsgRef.remove()
-      .then(()=>{
+      .then(() => {
         console.log("Remove succeeded.");
-        this.currentMsg = null;})
-      .catch(error=>{alert('delete message error: '+error.message)});
-    // remove context menu no matter what
-    this.contextMenuForMsg.style.display = 'none';
+        this.currentMsg = null;
+      })
+      .catch(error => { alert('delete message error: ' + error.message) });
   }
 
-  editMsg(e){
-    //console.log(`in editMsg: currentMsg=${this.currentMsg.value.content} props.user.value=${this.props.currentUser.value} currentMsg.value.username=${this.currentMsg.value.username}`);
-    if (this.validateAction() === false) return;
-    this.input.value = this.currentMsg.value.content;
-    this.input.focus();
-    this.editMode = true;
-    this.currentList.style.borderColor = 'red';
-    this.currentList.style.borderStyle = 'dashed';
-    this.currentList.style.borderWidth = '2px';
-  }
-
-  clicktoClose(e){
+  handleStopTyping() {
     //onClick event handler (if exists) is called before this
 
-    // has chosen a context menu item
-    if (e.target.parentElement === this.contextMenuForMsg) {
-      //console.log('1.............');
-      this.contextMenuForMsg.style.display = 'none';
-    }
-    else if (this.isTypingNew && e.target !== this.input && this.props.currentUser !== null){
-      const ref = this.props.firebase.database().ref('signedInUsers/'+this.props.currentUser.uid);
-      ref.child('isTyping').set('false').then(()=>{
-        this.isTypingNew = false;
+    if (this.props.currentUser) {
+      const ref = this.props.firebase.database().ref('signedInUsers/' + this.props.currentUser.uid);
+      ref.child('isTyping').set('false').then(() => {
+        console.log(`${this.props.currentUser.uid} isTyping set to FALSE in firebase`)
       })
-      .catch((error)=>{
-        alert(`Setting isTyping false: errorMessage=${error.message} email=${error.email} credential=${error.credential}`);
-      });
-    }
-    //Clicking outside textarea and not the selected msg exits edit mode
-    else if (this.editMode && e.target !== this.input && e.target !== this.currentList) {
-      //console.log('2..........in clicktoClose: editMode, input='+this.input.value);
-      this.input.value = '';
-      this.editMode = false;
-      this.currentList.style.border = 'none';
-      this.contextMenuForMsg.style.display = 'none';
-    }
-    //clicking anywhere else when context menu is on closes the menu
-    else if (this.contextMenuForMsg && this.contextMenuForMsg.style.display !== 'none'){
-      //console.log('3..........');
-      this.contextMenuForMsg.style.display = 'none';
+        .catch((error) => {
+          alert(`Setting isTyping false: errorMessage=${error.message} email=${error.email} credential=${error.credential}`);
+        });
     }
   }
 
-  hiliteName(msg){
-    if (msg.isOnline && msg.isTyping==='true') {
-      return (
-        <p className='msgHeader'>
-          <span className='username' style={{color:'green'}}>{msg.value.username}<span className="tooltiptext">User is online</span></span>
-          <div className='isTyping' style={{color:'gray',fontStyle:'Italic'}}> is typing......... </div>
-          <span className='sentat'>{new Date(msg.value.sentAt).toLocaleDateString() +' '+ new Date(msg.value.sentAt).toLocaleTimeString()}</span>
-        </p>)
-    }
-    else if (msg.isOnline && msg.isTyping!=='true') {
-      return (
-        <p className='msgHeader'>
-          <span className='username' style={{color:'green'}}>{msg.value.username}<span className="tooltiptext">User is online</span></span>
-          <span className='sentat'>{new Date(msg.value.sentAt).toLocaleDateString() +' '+ new Date(msg.value.sentAt).toLocaleTimeString()}</span>
-        </p>)
-    }
+  hiliteUserName(msg) {
+    let date = new Date(msg.value.sentAt).toLocaleDateString();
+    let time = new Date(msg.value.sentAt).toLocaleTimeString();
+
+    if (msg.isOnline) return (
+      <td className='userOnline'><div>{this.showTyping(msg)} <span className='text-success'>{msg.value.username}</span><span className="tooltiptext">User is online</span>
+        <p><small className='text-muted'>{date} {time}</small>
+        </p>
+      </div></td>
+    );
     else return (
-      <p className='msgHeader'>
-        <span className='username' style={{color:'purple'}}>{msg.value.username}<span className="tooltiptext">User is offline</span></span>
-        <span className='sentat'>{new Date(msg.value.sentAt).toLocaleDateString() +' '+ new Date(msg.value.sentAt).toLocaleTimeString()}</span>
-      </p>)
+      <td className='userOffline'><div>{this.showTyping(msg)} <span className='text-danger'>{msg.value.username}</span><span className="tooltiptext">User is offline</span>
+        <p><small className='text-muted'>{date} {time}</small>
+        </p>
+      </div></td>
+    )
   }
 
-  render(){
+  showTyping(msg) {
+    if (msg.isOnline && msg.isTyping === 'true') {
+      return (
+        <i className="fas fa-spinner fa-spin text-warning font-weight-bold"></i>
+      )
+    }
+  }
+
+  showRoomCreator() {
+    if (this.props.currentRoom) {
+      return <small className='pl-1 font-italic'> (Created by {this.props.currentRoom.createdBy})</small>
+    }
+  }
+
+  render() {
     //li don't need ref since onContextMenu has e.target
     //console.log('in render(): msgs='+this.state.messages.toString());
+
     return (
       <div>
-      <section className = {this.props.className}>
-        <h3>{this.props.currentRoom===null?'':this.props.currentRoom.value}</h3>
-        <ul id='msgProper'>
-          {
-            this.state.messages.map( (msg) =>
-            <li key={msg.key} tabIndex="0"
-              onContextMenu= {(e)=>this.handleMsgContext(e, msg)}>
-              {this.hiliteName(msg)}<br></br>
-              <p className='content'>{msg.value.content}</p>
-            </li>)
-          }
-        </ul>
-        {/* right click menu */}
-        <ul id='contextMsg' ref={(menu)=>this.contextMenuForMsg=menu}>
-            <li onClick={(e)=>this.deleteMsg(e)}>Delete</li>
-            <li onClick={(e)=>this.editMsg(e)}>Edit</li>
-        </ul>
-      </section>
-      {/*new message textarea*/}
-      <section className='newMessage'>
-        <textarea name='new message'
-          id='newMessage'
-          row = '3'
-          placeholder='Write your message here...'
-          onClick={()=>this.handleTextareaClick()}
-          ref={(input) => this.input = input}/>
-        <button type='submit' id='newMessageSubmit'
-          onClick={()=>this.editMode?this.handleEditMsgSubmit():this.handleNewMsgSubmit()}>Send</button>
-      </section>
+        {/* {console.log('props.key=', this.props.key, " curRoom=", this.props.currentRoom)} */}
+        <section className={this.props.className}>
+          <div className="RoomName mb-4 bg-light">
+            
+            <h3 className='pl-1 display-5 text-primary'>{this.props.currentRoom ? this.props.currentRoom.name : ''}</h3>
+            {this.showRoomCreator()}
+          </div>
+          <table className="table table-sm table-hover" style={{ tableLayout: 'fixed', wordWrap: 'break-word' }}>
+            <colgroup style={{ width: '100%' }}>
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '70%' }} />
+              <col style={{ width: '10%' }} />
+            </colgroup>
+
+            <tbody>
+              {
+                this.props.currentMsgs.map((msg) =>
+                  <tr key={msg.key}>
+                    {this.hiliteUserName(msg)}
+                    <td><div>{msg.value.content}</div></td>
+                    <td><div> <a href="#" className="btn btn-outline-info btn-block" data-toggle="modal" data-target="#chatDetailModal" onClick={() => {
+                      this.currentMsg = msg;
+                      this.editInput.value = msg.value.content;
+                    }}><i className="fas fa-angle-double-right"></i></a></div></td>
+                  </tr>)
+              }
+            </tbody>
+          </table>
+        </section>
+
+        {/*new message textarea*/}
+        <section className='newMessage mt-2 text-center'>
+          <textarea className='form-control border-info'
+            id='newMessage'
+            rows='5'
+            placeholder='Write your message here...'
+            ref={(input) => this.input = input}
+            onFocus={() => this.handleStartTyping()}
+            onBlur={() => this.handleStopTyping()} />
+          <button className="btn btn-primary float-right mt-1" id='newMessageSubmit'
+            onClick={() => this.handleNewMsgSubmit()}>Send</button>
+        </section>
+
+        {/* Chat detail MODAL */}
+        <div className="modal fade" id="chatDetailModal">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">Edit message</h5>
+                <button id='closeEditMsgModal' className="close" data-dismiss="modal">
+                  <span>&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <form id='formToEditMsg'>
+                  <div className="form-group">
+                    <textarea id='editMsgTA' rows='5' className="form-control" required
+                      ref={(input) => this.editInput = input}> </textarea>
+                  </div>
+                  <button className="btn btn-primary" onClick={(e) => this.handleEditMsgSubmit(e)}>Update Message</button>
+                  <button className="btn btn-warning ml-3" onClick={(e) => this.handleDeleteMsg(e)}>Delete Message</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
