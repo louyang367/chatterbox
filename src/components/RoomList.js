@@ -145,9 +145,9 @@ class RoomList extends Component {
 
   hiliteRoom(room) {
     if (this.props.currentRoom != null && room.key === this.props.currentRoom.key)
-      return <li className='list-group-item active' key={room.key} onClick={() => { this.props.setCurrentRoom(room); this.renameRoomInput.value = room.name }}>{room.name}</li>
+      return <li className='list-group-item active border-0 list-group-item-action' key={room.key} onClick={() => { this.props.setCurrentRoom(room); this.renameRoomInput.value = room.name }}><i class="far fa-address-card"></i> {room.name}</li>
     else {
-      return <li className='list-group-item' key={room.key} onClick={() => { this.props.setCurrentRoom(room); this.renameRoomInput.value = room.name }}>{room.name}</li>;
+      return <li className='list-group-item border-0 list-group-item-action' key={room.key} onClick={() => { this.props.setCurrentRoom(room); this.renameRoomInput.value = room.name }}><i class="far fa-address-card"></i> {room.name}</li>;
     }
   }
 
@@ -155,10 +155,10 @@ class RoomList extends Component {
     //console.log("roomList.js render: props.currentRoom="+this.props.currentRoom);
     //console.log("roomList.js render: props.className="+this.props.className);
     return (
-      <div className={this.props.className}>
+      <div className={this.props.className} bg-light style={{width:'100%'}}>
         {/* list of existing rooms */}
-        <div className="card">
-          <div className='card-header text-center bg-light text-dark'>
+        <div className="card border-0">
+          <div className='card-header text-center text-dark'>
             <h3 className='dropdown'>
               <a href="#" className="dropdown-toggle" data-toggle="dropdown">
                 Rooms</a>

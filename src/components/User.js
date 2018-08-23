@@ -79,13 +79,13 @@ class User extends Component {
      button = <button className="btn btn-outline-warning ml-3" name='SignOut' id='singOut' onClick={() => this.handleSignOut()}><i className="fas fa-user-times"></i> Log out</button>
     } else {
       name = 'Guest';
-      button = <img src='/googleSignIn1.png' id='googleSingIn' alt='Google signin icon' width='180px' style={{marginLeft:'5px', border:'1px groove #17a2b8'}} onClick={() => this.handleSignIn()} />;
+      button = <img src='/googleSignIn1.png' id='googleSingIn' alt='Google signin icon' width='180px' style={{marginLeft:'5px', border:'1px groove lightgrey'}} onClick={() => this.handleSignIn()} />;
     }
 
      return (
       <div className={this.props.className}>
         <p className='pt-3 float-right'>
-          Welcome!<span className='font-weight-bold'><i className="fas fa-user ml-3"></i> {name} </span> 
+          <span className='font-weight-bold'><i className="fas fa-user ml-3"></i> {name} </span> 
           <span>{button}</span>
         </p>
       </div>

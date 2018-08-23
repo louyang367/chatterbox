@@ -38,25 +38,15 @@ class OnlineStatus extends Component {
 
     return (
       <div className={this.props.className}>
-        <div className='row'>
-          <div className="col">
 
-            <div className="card border-0 bg-info text-center text-white">
-              <div className="card-body">
-                <h5>Users online:</h5>
-                <h3><i className="fas fa-users"></i> <span className="badge badge-primary badge-pill">{this.totalOnlineUsers()}</span></h3>
-              </div>
-            </div>
-          </div>
-          <div className="col">
-            <div className="card border-0 bg-info text-center text-white">
-              <div className="card-body">
-                <h5>Users who are typing right now:</h5>
-                <h3><i className="far fa-keyboard"></i> <span className="badge badge-primary badge-pill">{this.totalWhosTyping()}</span></h3>
-              </div>
-            </div>
-          </div>
-        </div>
+        <p className="text-center text-primary">
+          <span className="num-online mx-5">
+            <i className="fas fa-users"></i><span className="badge badge-primary badge-pill">{this.totalOnlineUsers()}</span><span className="tooltiptext">Number of users online</span>
+          </span>
+          <span className="num-typing mx-5">
+             <i className="far fa-keyboard"></i><span className="badge badge-primary badge-pill">{this.totalWhosTyping()}</span><span className="tooltiptext">Number of users who are typing</span>
+          </span>
+        </p>
       </div>
     )
 

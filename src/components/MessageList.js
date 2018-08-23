@@ -160,14 +160,14 @@ class MessageList extends Component {
   showTyping(msg) {
     if (msg.isOnline && msg.isTyping === 'true') {
       return (
-        <i className="fas fa-spinner fa-spin text-warning font-weight-bold"></i>
+        <i className="fas fa-spinner fa-spin text-primary font-weight-bold show-typing"></i>
       )
     }
   }
 
   showRoomCreator() {
     if (this.props.currentRoom) {
-      return <small className='pl-1 font-italic'> (Created by {this.props.currentRoom.createdBy})</small>
+      return <small className='pl-1 pt-2 font-italic'> (Created by {this.props.currentRoom.createdBy})</small>
     }
   }
 
@@ -177,11 +177,11 @@ class MessageList extends Component {
 
     return (
       <div>
-        {/* {console.log('props.key=', this.props.key, " curRoom=", this.props.currentRoom)} */}
+        {/* {console.log("curRoom=", this.props.currentRoom)} */}
         <section className={this.props.className}>
-          <div className="RoomName mb-4 bg-light">
-            
-            <h3 className='pl-1 display-5 text-primary'>{this.props.currentRoom ? this.props.currentRoom.name : ''}</h3>
+          <div className="RoomName text-white text-center">
+            <h2><i class="far fa-address-card text-white"></i>
+              <span className='pl-1'> {this.props.currentRoom ? this.props.currentRoom.name : ''}</span></h2>
             {this.showRoomCreator()}
           </div>
           <table className="table table-sm table-hover" style={{ tableLayout: 'fixed', wordWrap: 'break-word' }}>
@@ -208,15 +208,16 @@ class MessageList extends Component {
         </section>
 
         {/*new message textarea*/}
-        <section className='newMessage mt-2 text-center'>
-          <textarea className='form-control border-info'
+        <section className='newMessage mt-2 text-center fixed-bottom'>
+          <textarea className='form-control border-info bg-light float-left'
             id='newMessage'
-            rows='5'
+            style={{ width: '89%' }}
+            rows='4'
             placeholder='Write your message here...'
             ref={(input) => this.input = input}
             onFocus={() => this.handleStartTyping()}
             onBlur={() => this.handleStopTyping()} />
-          <button className="btn btn-primary float-right mt-1" id='newMessageSubmit'
+          <button className="btn btn-primary float-right my-5" id='newMessageSubmit'
             onClick={() => this.handleNewMsgSubmit()}>Send</button>
         </section>
 

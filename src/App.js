@@ -94,7 +94,9 @@ class App extends Component {
           <div className="container">
             <div className="row">
               <div className="col-md-5">
-                <span className='display-4'><i className="fa fa-comments"></i> ChatterBox</span>
+                <span className='display-4'><i className="fa fa-comments"></i>
+                  <span className='letter-c'>C</span><span className='letter-h'>h</span><span className='letter-a'>a</span><span className='letter-t'>t</span><span className='letter-t'>t</span><span className='letter-e'>e</span><span className='letter-r'>r</span><span className='letter-b'>B</span><span className='letter-b'>o</span><span className='letter-x'>x</span>
+                </span>
               </div>
               <div className="col-md-2"></div>
               <div className="col-md-5 px=0">
@@ -112,40 +114,43 @@ class App extends Component {
         <main>
           <div className="container mt-4">
             <div className="row">
-              <div className="col-md-8">
-                <MessageList className='MessageList'
-                  firebase={firebase}
-                  currentRoom={this.state.currentRoom}
-                  currentUser={this.state.currentUser}
-                  currentMsgs={this.state.currentMsgs}
-                  setCurrentMsgs={(msgs) => this.setCurrentMsgs(msgs)}
-                  key={this.state.currentRoom ? this.state.currentRoom.key : null}
-                />
+
+              <div className="col-md-8 pr-3">
+                <div className="row pr-3">
+                  <MessageList className='MessageList'
+                    firebase={firebase}
+                    currentRoom={this.state.currentRoom}
+                    currentUser={this.state.currentUser}
+                    currentMsgs={this.state.currentMsgs}
+                    setCurrentMsgs={(msgs) => this.setCurrentMsgs(msgs)}
+                    key={this.state.currentRoom ? this.state.currentRoom.key : null}
+                  />
+                </div>
               </div>
 
               <div className="col-md-4" id='roomsProper'>
-                <RoomList className='RoomList'
-                  firebase={firebase}
-                  currentRoom={this.state.currentRoom}
-                  currentUser={this.state.currentUser}
-                  setCurrentRoom={(room) => this.setCurrentRoom(room)} />
+
+                <div className="row">
+                  <OnlineStatus className="OnlineStatus p-2"
+                    firebase={firebase}
+                    onlineStatusRecords={this.state.onlineStatusRecords}
+                    setUserOnlineStatus={(onlineStatusRecords) => this.setUserOnlineStatus(onlineStatusRecords)
+                    }
+                  />
+                </div>
+                <div className="row">
+                  <RoomList className='RoomList'
+                    firebase={firebase}
+                    currentRoom={this.state.currentRoom}
+                    currentUser={this.state.currentUser}
+                    setCurrentRoom={(room) => this.setCurrentRoom(room)} />
+                </div>
               </div>
             </div>
           </div>
-
         </main>
 
-        <footer id="main-footer" className="text-white bg-info mt-5 p-2 fixed-bottom">
-            <OnlineStatus className="OnlineStatus"
-              firebase={firebase}
-              onlineStatusRecords={this.state.onlineStatusRecords}
-              setUserOnlineStatus={(onlineStatusRecords) => this.setUserOnlineStatus(onlineStatusRecords)
-              }
-            />
-
-        </footer>
-
-      </div>
+      </div >
     )
   }
 }

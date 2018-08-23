@@ -8,6 +8,39 @@
   margin-left: 5px;
 }
 
+/* header site-name */
+#App-header .letter-c {
+  color: red;
+}
+#App-header .letter-h {
+  color: blue;
+}
+#App-header .letter-a {
+  color: yellow;
+}
+#App-header .letter-t {
+  color: green;
+}
+#App-header .letter-e {
+  color: purple;
+}
+#App-header .letter-r {
+  color: orange;
+}
+#App-header .letter-b {
+  color: aquamarine;
+}
+#App-header .letter-o {
+  color: indigo;
+}
+#App-header .letter-x {
+  color: maroon;
+}
+
+.RoomName {
+  background-image: linear-gradient(to right, #0b505b, white);
+}
+
 /* tooltips for user online status color coding on MessageList */
 .tooltiptext {
   visibility: hidden;
@@ -32,13 +65,36 @@ color: white;
   visibility: visible;
 }
 
-/* Room name of MessageList */
+.OnlineStatus .tooltiptext {
+  background-color: white;
+  color: #17a2b8;
+  font-size: 1rem;
+  }
+.num-online:hover .tooltiptext, .num-typing:hover .tooltiptext{
+    visibility: visible;
+  }
+  
+.OnlineStatus {
+  font-size: 2rem;
+}
+
+/* Room name of MessageList 
 .MessageList .RoomName {
   border-top: 2px solid #17a2b8;
   border-bottom: 2px solid #17a2b8
+} */
+
+#roomsProper {
+/* .RoomList { */
+  border-left: 1px solid #17a2b8;
+  border-right: 1px solid #17a2b8;
+}
+.RoomList .list-group-item {
+  padding-top: 2px;
+  padding-bottom: 2px;
 }
 
-.RoomList .card {
-  border-left: 1px solid #17a2b8;
-  border-right: 1px solid #17a2b8
+.newMessage {
+  margin-left: 8%;
+  width: 55%;
 }
