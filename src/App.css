@@ -38,7 +38,7 @@
 }
 
 .RoomName {
-  background-image: linear-gradient(to right, #0b505b, white);
+  background-image: linear-gradient(to right, #a5e8f3, white);
 }
 
 /* tooltips for user online status color coding on MessageList */
@@ -92,6 +92,10 @@ color: white;
 .RoomList .list-group-item {
   padding-top: 2px;
   padding-bottom: 2px;
+}
+
+.RoomList .list-group-item.active {
+  background-color: #17a2b8;
 }
 
 .newMessage {

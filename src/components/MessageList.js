@@ -179,8 +179,8 @@ class MessageList extends Component {
       <div>
         {/* {console.log("curRoom=", this.props.currentRoom)} */}
         <section className={this.props.className}>
-          <div className="RoomName text-white text-center">
-            <h2><i class="far fa-address-card text-white"></i>
+          <div className="RoomName text-info text-center">
+            <h2><i class="far fa-address-card text-info"></i>
               <span className='pl-1'> {this.props.currentRoom ? this.props.currentRoom.name : ''}</span></h2>
             {this.showRoomCreator()}
           </div>

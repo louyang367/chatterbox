@@ -44,7 +44,7 @@ class OnlineStatus extends Component {
             <i className="fas fa-users"></i><span className="badge badge-primary badge-pill">{this.totalOnlineUsers()}</span><span className="tooltiptext">Number of users online</span>
           </span>
           <span className="num-typing mx-5">
-             <i className="far fa-keyboard"></i><span className="badge badge-primary badge-pill">{this.totalWhosTyping()}</span><span className="tooltiptext">Number of users who are typing</span>
+             <i className="far fa-keyboard"></i><span className="badge badge-primary badge-pill">{this.totalWhosTyping()}</span><span className="tooltiptext">Users of current room who are typing</span>
           </span>
         </p>
       </div>
